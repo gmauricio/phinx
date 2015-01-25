@@ -275,6 +275,80 @@ class Manager
     }
 
     /**
+     * Seeds an environment with default seeder class or by specifying one
+     *
+     * @param $environment
+     * @param null $seederClass
+     */
+    public function seed($environment, $seederClass = null)
+    {
+        /** @var AbstractSeeder $seed */
+        $seed = $this->getSeed($seederClass);
+
+        $this->getOutput()->writeln('');
+        $this->getOutput()->writeln(
+            ' =='
+            . ' <info>' . $seed->getName() . ':</info>'
+        );
+
+        // Execute the seed and log the time elapsed.
+        $start = microtime(true);
+        $this->getEnvironment($environment)->executeMigration($seed);
+        $end = microtime(true);
+
+        $this->getOutput()->writeln(
+            ' =='
+            . ' <info>' . $seed->getName() . ':</info>'
+            . ' ' . sprintf('%.4fs', $end - $start) . '</comment>'
+        );
+    }
+
+    protected function getSeed($seederClass = null)
+    {
+        $config = $this->getConfig();
+
+        if (!$seederClass) {
+            $seederClass = "DatabaseSeeder";
+        }
+
+        $filePath = glob($config->getSeedsPath() . DIRECTORY_SEPARATOR . $seederClass . '.php');
+
+        // convert the filename to a class name
+        $class = basename($filePath);
+        if (false !== strpos($class, '.')) {
+            $class = substr($class, 0, strpos($class, '.'));
+        }
+
+        // load the seed file
+        /** @noinspection PhpIncludeInspection */
+        require_once $filePath;
+        if (!class_exists($class)) {
+            throw new \InvalidArgumentException(sprintf(
+                'Could not find class "%s" in file "%s"',
+                $class,
+                $filePath
+            ));
+        }
+
+        // instantiate it
+        $seed = new $class();
+
+        if (!($seed instanceof AbstractSeeder)) {
+            throw new \InvalidArgumentException(sprintf(
+                'The class "%s" in file "%s" must extend \Phinx\Migration\AbstractSeeder',
+                $class,
+                $filePath
+            ));
+        }
+
+        $seed->setOutput($this->getOutput());
+
+        ksort($versions);
+
+        return $seed;
+    }
+
+    /**
      * Sets the environments.
      *
      * @param array $environments Environments

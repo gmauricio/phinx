@@ -56,6 +56,7 @@ class PhinxApplication extends Application
             new Command\Create(),
             new Command\Migrate(),
             new Command\Rollback(),
+            new Command\Seed(),
             new Command\Status(),
             new Command\Test(),
         ));

@@ -227,6 +227,15 @@ class Config implements ConfigInterface
         return $this->values['paths']['migrations'];
     }
 
+    public function getSeedsPath()
+    {
+        if (!isset($this->values['paths']['seeds'])) {
+            throw new \UnexpectedValueException('Seeds path missing from config file');
+        }
+
+        return $this->values['paths']['seeds'];
+    }
+
     /**
      * Gets the base class name for migrations.
      *
