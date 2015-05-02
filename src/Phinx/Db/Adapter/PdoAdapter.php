@@ -330,30 +330,22 @@ abstract class PdoAdapter implements AdapterInterface
     /**
      * {@inheritdoc}
      */
-    public function insert(Table $table, $data)
+    public function insert(Table $table, $columns, $data)
     {
         $this->startCommandTimer();
 
+        $sql = sprintf(
+            "INSERT INTO %s ",
+            $this->quoteTableName($table->getName())
+        );
+
+        $sql .= "(". implode(', ', array_map(array($this, 'quoteColumnName'), $columns)) . ")";
+        $sql .= " VALUES (" . implode(', ', array_fill(0, count($columns), '?')) . ")";
+
+        $stmt = $this->getConnection()->prepare($sql);
+
         foreach ($data as $row) {
-
-            $sql = sprintf(
-                "INSERT INTO %s (",
-                $this->quoteTableName($table->getName())
-            );
-
-            foreach (array_keys($row) as $columnName) {
-                $sql .= $this->quoteColumnName($columnName) . ', ';
-            }
-            $sql = substr(rtrim($sql), 0, -1) . ")";
-
-            $sql .= " VALUES (";
-
-            foreach (array_values($row) as $value) {
-                $sql .= (is_numeric($value) ? $value : "'" . $value . "'") . ', ';
-            }
-            $sql = substr(rtrim($sql), 0, -1) . ")";
-
-            $this->execute($sql);
+            $stmt->execute($row);
         }
 
         $this->endCommandTimer();
@@ -384,9 +376,9 @@ abstract class PdoAdapter implements AdapterInterface
                 'INSERT INTO %s ('
                 . 'version, start_time, end_time'
                 . ') VALUES ('
-                . '"%s",'
-                . '"%s",'
-                . '"%s"'
+                . '\'%s\','
+                . '\'%s\','
+                . '\'%s\''
                 . ');',
                 $this->getSchemaTableName(),
                 $migration->getVersion(),
@@ -464,6 +456,7 @@ abstract class PdoAdapter implements AdapterInterface
             'date',
             'binary',
             'boolean',
+            'uuid',
             // Geospatial data types
             'geometry',
             'point',

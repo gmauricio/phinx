@@ -65,6 +65,10 @@ interface AdapterInterface
     const PHINX_TYPE_LINESTRING     = 'linestring';
     const PHINX_TYPE_POLYGON        = 'polygon';
 
+	// only for mysql so far
+    const PHINX_TYPE_ENUM           = 'enum';
+    const PHINX_TYPE_SET            = 'set';
+
     /**
      * Get all migrated version numbers.
      *
@@ -230,9 +234,10 @@ interface AdapterInterface
      * Inserts data into the table
      *
      * @param Table $table where to insert data
+     * @param array $columns column names
      * @param $data
      */
-    public function insert(Table $table, $data);
+    public function insert(Table $table, $columns, $data);
 
     /**
      * Quotes a table name for use in a query.
